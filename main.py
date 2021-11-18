@@ -1,7 +1,7 @@
 import random
 
-GENERATION_SIZE = 8
-NUMBER_OF_GENERATIONS = 25
+GENERATION_SIZE = 10
+NUMBER_OF_GENERATIONS = 20
 
 
 def problem(x, y, z):
@@ -61,27 +61,6 @@ def main():
     for genome in genomes:
         genome_with_cost.append(
             [cost(genome[0], genome[1], genome[2]), genome])
-    """
-    generation = 0
-    while generation < NUMBER_OF_GENERATIONS:
-        print("START")
-        print(genome_with_cost)
-        genome_with_cost = mutations(genome_with_cost)
-        print("AFTER MUTATIONS")
-        print(genome_with_cost)
-        genome_with_cost = tournament_selection(genome_with_cost)
-        print("AFTER TOURNAMENT")
-        print(genome_with_cost)
-        print("\n")
-        print(generation_avarage_cost(genome_with_cost))
-        print("\n")
-        generation += 1
-    """
-    genome_with_cost = [[94922142, [60, 83, -90]], [94922142, [60, 83, -90]],
-                        [94922142, [60, 83, -90]], [94922142, [60, 83, -90]],
-                        [94922142, [60, 83, -90]], [94922142, [60, 83, -90]],
-                        [94922142, [60, 83, -90]], [94922142, [60, 83, -90]],
-                        [94922142, [60, 83, -90]], [94922142, [60, 83, -90]]]
 
     for _ in range(NUMBER_OF_GENERATIONS):
         print("\n")
