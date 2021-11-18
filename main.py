@@ -11,7 +11,7 @@ class Genome:
         self.x = x
         self.y = y
         self.z = z
-        self.cost = cost(self)
+        self.cost = self.cost_function()
 
     def mutations(self):
         if random.randint(1, 100) < 5:
@@ -19,16 +19,15 @@ class Genome:
             if random_int == 1: self.x = random.randint(-100, 100)
             if random_int == 2: self.y = random.randint(-100, 100)
             if random_int == 3: self.z = random.randint(-100, 100)
-            self.cost = cost(self)
+            self.cost = self.cost_function()
             print("mutation occured---------------")
+
+    def cost_function(self):
+        return abs(0 - problem(self.x, self.y, self.z))
 
 
 def problem(x, y, z):
     return (500 * x) + (2 * y**4) - (3 * z**2) - 200
-
-
-def cost(genome):
-    return abs(0 - problem(genome.x, genome.y, genome.z))
 
 
 def create_init_genomes():
