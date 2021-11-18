@@ -1,25 +1,42 @@
 import random
 
 GENERATION_SIZE = 10
-NUMBER_OF_GENERATIONS = 20
+NUMBER_OF_GENERATIONS = 5
+
+random.seed(1)
+
+
+class Genome:
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.cost = cost(self)
+
+    def mutations(self):
+        if random.randint(1, 100) < 5:
+            random_int = random.randint(1, 3)
+            if random_int == 1: self.x = random.randint(-100, 100)
+            if random_int == 2: self.y = random.randint(-100, 100)
+            if random_int == 3: self.z = random.randint(-100, 100)
+            self.cost = cost(self)
+            print("mutation occured---------------")
 
 
 def problem(x, y, z):
     return (500 * x) + (2 * y**4) - (3 * z**2) - 200
 
 
-def cost(x, y, z):
-    return abs(0 - problem(x, y, z))
+def cost(genome):
+    return abs(0 - problem(genome.x, genome.y, genome.z))
 
 
 def create_init_genomes():
     genomes = []
     for _ in range(GENERATION_SIZE):
-        genomes.append([
-            random.randint(-100, 100),
-            random.randint(-100, 100),
-            random.randint(-100, 100)
-        ])
+        genomes.append(
+            Genome(random.randint(-100, 100), random.randint(-100, 100),
+                   random.randint(-100, 100)))
     return genomes
 
 
@@ -30,8 +47,10 @@ def tournament_selection(input_generation):
             input_generation[random.randint(0, GENERATION_SIZE - 1)],
             input_generation[random.randint(0, GENERATION_SIZE - 1)]
         ]
-        participants.sort()
-        winner = participants[0]
+        if participants[0].cost < participants[1].cost:
+            winner = participants[0]
+        else:
+            winner = participants[1]
         next_gen.append(winner)
     return next_gen
 
@@ -39,39 +58,23 @@ def tournament_selection(input_generation):
 def generation_avarage_cost(generation):
     sum = 0
     for genome in generation:
-        sum += genome[0]
+        sum += genome.cost
     return sum / len(generation)
-
-
-def mutations(generation):
-    for genome in generation:
-        random_int = random.randint(1, 15)
-        if random_int < 2:
-            print("MUTATION")
-            genome[1][random.randint(0, 2)] = random.randint(-100, 100)
-            genome[0] = cost(genome[1][0], genome[1][1], genome[1][2])
-    return generation
 
 
 def main():
 
     genomes = create_init_genomes()
-    genome_with_cost = []
-
-    for genome in genomes:
-        genome_with_cost.append(
-            [cost(genome[0], genome[1], genome[2]), genome])
 
     for _ in range(NUMBER_OF_GENERATIONS):
         print("\n")
-        print("START")
-        print(genome_with_cost)
-        genome_with_cost = mutations(genome_with_cost)
-        print("AFTER MUTATION")
-        print(genome_with_cost)
-        genome_with_cost = tournament_selection(genome_with_cost)
+        for genome in genomes:
+            print(f"pre-mutatie: {genome.x} {genome.y} {genome.z}")
+            genome.mutations()
+            print(f"post-mutatie: {genome.x} {genome.y} {genome.z}")
+        genomes = tournament_selection(genomes)
 
-        print(generation_avarage_cost(genome_with_cost))
+        print(generation_avarage_cost(genomes))
 
 
 if __name__ == "__main__":
