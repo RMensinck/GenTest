@@ -18,6 +18,9 @@ class TileGrid:
     def get_tile(self, x, y):
         return self.map[x][y]
 
+    def get_tile_by_pos(self, pos):
+        return self.map[pos.x][pos.y]
+
 
 class Pos:
     def __init__(self, x, y) -> None:
