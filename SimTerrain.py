@@ -1,15 +1,22 @@
-class Grid:
+from typing import List
+
+
+class TileGrid:
     def __init__(self, width, height, grid_size):
         self.grid_size = grid_size
         self.width = width
         self.height = height
-        self.tiles = []
+        self.map: List[List[Tile]] = [None] * width
         for x in range(0, self.width):
+            self.map[x] = [None] * height
             for y in range(0, self.height):
-                self.tiles.append(Pos(x, y))
+                self.map[x][y] = Tile(x, y)
 
     def __str__(self):
         return f"The Grid"
+
+    def get_tile(self, x, y):
+        return self.map[x][y]
 
 
 class Pos:
@@ -21,15 +28,30 @@ class Pos:
         return f"Position x:{self.x} y:{self.y}"
 
 
+class Tile:
+    def __init__(self, x, y) -> None:
+        self.pos = Pos(x, y)
+        self.bacteria = False
+        self.wall = False
+
+    def __str__(self) -> str:
+        return f"Tile of position {self.pos.x},{self.pos.y}"
+
+    def is_wall(self):
+        return self.wall
+
+    def is_bacteria(self):
+        return self.bacteria
+
+    def is_open(self):
+        return self.bacteria == False and self.wall == False
+
+
 class Wall:
-    def __init__(self, id, width, height, start_x, start_y) -> None:
+    def __init__(self, id, x, y) -> None:
         self.id = id
-        self.width = width
-        self.height = height
-        self.start_x = start_x
-        self.start_y = start_y
-        self.end_x = self.start_x + width
-        self.end_y = self.start_y + height
+        self.x = x
+        self.y = y
         self.color = 0, 0, 0
 
     def __str__(self) -> str:
