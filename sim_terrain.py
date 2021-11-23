@@ -30,12 +30,23 @@ class Pos:
     def __str__(self) -> str:
         return f"Position x:{self.x} y:{self.y}"
 
+    def is_adjecent_to(self, target_pos):
+        if self.x == target_pos.x:
+            if abs(self.y - target_pos.y) == 1:
+                return True
+        if self.y == target_pos.y:
+            if abs(self.x - target_pos.x) == 1:
+                return True
+        else:
+            return False
+
 
 class Tile:
     def __init__(self, x, y) -> None:
         self.pos = Pos(x, y)
         self.bacteria = False
         self.wall = False
+        self.food = False
 
     def __str__(self) -> str:
         return f"Tile of position {self.pos.x},{self.pos.y}"
@@ -46,8 +57,11 @@ class Tile:
     def is_bacteria(self):
         return self.bacteria
 
+    def is_food(self):
+        return self.food
+
     def is_open(self):
-        return self.bacteria == False and self.wall == False
+        return self.bacteria == False and self.wall == False and self.food == False
 
 
 class Wall:

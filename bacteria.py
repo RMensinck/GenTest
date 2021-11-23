@@ -1,5 +1,5 @@
 import random
-from SimTerrain import Pos
+from sim_terrain import Pos
 
 
 class Bacteria:
@@ -8,6 +8,9 @@ class Bacteria:
         self.genome = genome
         self.pos = Pos(x, y)
         self.color = 150, 70, 70
+        self.age = 0
+        self.max_age = 100
+        self.food_eaten = 0
 
     def __str__(self):
         return f"Bacteria id: {self.id}"
@@ -31,6 +34,14 @@ class Bacteria:
 
         return Bacteria(self.id, BacteriaGenome(self.id), target_tile.pos.x,
                         target_tile.pos.y)
+
+    def eat(self, foods):
+
+        for food in foods:
+            if self.pos.is_adjecent_to(food.pos) == True:
+                self.food_eaten += 1
+                food.stock -= 1
+                self.color = 0, 200, 0
 
     def get_random_direction(self, FIELD_WIDTH, FIELD_HEIGHT):
 
@@ -87,6 +98,15 @@ class Bacteria:
             if attempts >= 10: return None
 
         return target_tile
+
+    def check_survival(self):
+        if self.max_age < self.age:
+            return False
+        else:
+            return True
+
+    def update_age(self):
+        self.age += 1
 
 
 class BacteriaGenome:

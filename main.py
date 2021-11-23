@@ -2,8 +2,9 @@ import cv2 as cv
 import numpy as np
 import random
 from load_constants import CONSTANTS
-from SimTerrain import Wall, Pos, TileGrid
+from sim_terrain import Tile, Wall, Pos, TileGrid
 from bacteria import Bacteria, BacteriaGenome
+from food import Food
 
 TILE_SIZE = CONSTANTS["PARAMETERS"]["TILE_SIZE"]
 FIELD_WIDTH = CONSTANTS["PARAMETERS"]["FIELD_WIDTH"]
@@ -28,6 +29,14 @@ def draw_walls():
                      wall.color, cv.FILLED)
 
 
+def draw_food():
+    for food in foods:
+        cv.rectangle(simmap, (food.pos.x * TILE_SIZE, food.pos.y * TILE_SIZE),
+                     (food.pos.x * TILE_SIZE + TILE_SIZE - 1,
+                      food.pos.y * TILE_SIZE + TILE_SIZE - 1), food.color,
+                     cv.FILLED)
+
+
 def draw_bacteria():
     for bac in bacteria:
         if bacteria == None:
@@ -38,45 +47,53 @@ def draw_bacteria():
                      cv.FILLED)
 
 
+def find_random_pos():
+    target_pos = Pos(random.randint(0, FIELD_WIDTH - 1),
+                     random.randint(0, FIELD_HEIGHT - 1))
+    return target_pos
+
+
+def find_open_random_pos(max_attempts) -> Tile:
+    target_tile = tilemap.get_tile_by_pos(find_random_pos())
+    attempts = 0
+    while target_tile.is_open() == False:
+        target_tile = tilemap.get_tile_by_pos(find_random_pos())
+        attempts += 1
+        if attempts > max_attempts: return None
+    return target_tile
+
+
 def create_new_bacteria(genome_id, bacteria_id):
 
     genome = BacteriaGenome(genome_id)
-
-    def find_x():
-        return random.randint(0, FIELD_WIDTH - 1)
-
-    def find_y():
-        return random.randint(0, FIELD_HEIGHT - 1)
-
-    x = find_x()
-    y = find_y()
-    target_tile = tilemap.get_tile(x, y)
-
-    attempts = 0
-    while target_tile.bacteria == True:
-        x = find_x()
-        y = find_y()
-        target_tile = tilemap.get_tile(x, y)
-        attempts += 1
-        if attempts > 100: return None
-
+    target_tile = find_open_random_pos(100)
+    if target_tile == None: return None
     target_tile.bacteria = True
 
-    print(f"new bacteria at {x},{y}")
-    return Bacteria(bacteria_id, genome, x, y)
+    return Bacteria(bacteria_id, genome, target_tile.pos.x, target_tile.pos.y)
 
 
 def create_new_wall(id, x, y):
-    print("create_new_wall called get_tile")
+    """
+    update before using
+    """
     target_tile = tilemap.get_tile(x, y)
     target_tile.wall = True
     return Wall(id, x, y)
+
+
+def create_food():
+    target_tile = find_open_random_pos(100)
+    if target_tile == None: return None
+    target_tile.food = True
+    return Food(target_tile.pos)
 
 
 #Setup walls and bacteria lists
 tilemap = TileGrid(FIELD_WIDTH, FIELD_HEIGHT, TILE_SIZE)
 walls = []
 bacteria = []
+foods = []
 
 simmap = draw_field(FIELD_HEIGHT * TILE_SIZE, FIELD_WIDTH * TILE_SIZE,
                     BACKGROUND_COLOR)
@@ -87,42 +104,51 @@ draw_walls()
 for day in range(NUMBER_OF_DAYS):
 
     print(f"day: {day}")
-    if day % 5 == 0:
+
+    #spawn food
+    if day < 25:
+        new_food = create_food()
+        if new_food != None:
+            foods.append(new_food)
+
+    #update age of all bacteria and let them eat
+    for bac in bacteria:
+        bac.update_age()
+        bac.eat(foods)
+        if bac.check_survival() == False:
+            bacteria.remove(bac)
+
+    #add new bacteria
+    if day < 10:
         new_bac = create_new_bacteria(day, day)
         if new_bac != None:
-            print("new bacteria created succesfully")
             bacteria.append(new_bac)
 
-    if day % 10 == 0:
-        new_bacteria = []
-        for bac in bacteria:
-            new_bac = bac.devide(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
-            if new_bac != None:
-                print(
-                    f"bacteria {bac.pos.x},{bac.pos.y} devided succesfully into {new_bac.pos.x},{new_bac.pos.y}"
-                )
-                new_bacteria.append(new_bac)
-            else:
-                print(
-                    f"bacteria at {bac.pos.x},{bac.pos.y} failed to reproduce")
+    #check food stock left
+    for food in foods:
+        if food.check_stock_left() == False:
+            foods.remove(food)
 
-        for bac in new_bacteria:
-            bacteria.append(bac)
+    new_bacteria = []
+    for bac in bacteria:
+        if bac.food_eaten >= 3:
+            new_bac = bac.devide(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
+            bac.food_eaten = 0
+            if new_bac != None:
+                new_bacteria.append(new_bac)
+
+    for bac in new_bacteria:
+        bacteria.append(bac)
 
     for bac in bacteria:
         bac.move(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
-
-    for i, x in enumerate(tilemap.map):
-        for j, y in enumerate(x):
-            print(
-                f"tile {tilemap.map[i][j].pos.x},{tilemap.map[i][j].pos.y} bac status is: {tilemap.map[i][j].bacteria}"
-            )
 
     #draw background
     simmap = draw_field(FIELD_HEIGHT * TILE_SIZE, FIELD_WIDTH * TILE_SIZE,
                         BACKGROUND_COLOR)
 
     draw_bacteria()
+    draw_food()
     print(f"number of bacteria: {len(bacteria)}")
     cv.imshow("blank", simmap)
 
