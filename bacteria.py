@@ -1,22 +1,28 @@
 import random
 from matplotlib.pyplot import colorbar
+from numpy.lib.function_base import copy
 from sim_terrain import Position, Tile
 from genome import Genome
 
 
 class Bacteria:
-    def __init__(self, id, x, y) -> None:
+    def __init__(self, id, pos, genome) -> None:
         self.id = id
-        self.genome = Genome()
-        self.pos = Position(x, y)
+        self.genome = genome
+        self.pos = pos
         self.age = 0
-        self.max_age = self.genome.max_age
         self.food_eaten = 0
+        self.max_age = self.genome.max_age
         self.food_for_reproduction = self.genome.food_for_reproduction
         self.color = self.genome.color
 
     def __str__(self) -> str:
         return f"Bacteria id: {self.id}"
+
+    def update_self(self) -> None:
+        self.max_age = self.genome.max_age
+        self.food_for_reproduction = self.genome.food_for_reproduction
+        self.color = self.genome.color
 
     def move(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
         target_tile = self.get_random_open_adjecent_tile(
@@ -35,7 +41,13 @@ class Bacteria:
         if target_tile == None: return None
         target_tile.bacteria = True
 
-        return Bacteria(self.id, target_tile.pos.x, target_tile.pos.y)
+        mutated_genome = self.genome.mutate()
+        if mutated_genome == False:
+            return Bacteria(
+                self.id, target_tile.pos,
+                Genome(self.color, self.max_age, self.food_for_reproduction))
+        else:
+            return Bacteria(self.id, target_tile.pos, mutated_genome)
 
     def eat(self, foods) -> None:
 
@@ -43,6 +55,7 @@ class Bacteria:
             if self.pos.is_adjacent_to(food.pos) == True:
                 self.food_eaten += 1
                 food.stock -= 1
+                """
                 if self.food_eaten == 1:
                     self.color = 150, 100, 70
                 if self.food_eaten == 2:
@@ -51,6 +64,7 @@ class Bacteria:
                     self.color = 150, 160, 70
                 if self.food_eaten > 3:
                     self.color = 150, 190, 70
+                """
 
     def get_random_direction(self, FIELD_WIDTH, FIELD_HEIGHT) -> str:
 

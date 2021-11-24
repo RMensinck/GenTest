@@ -10,5 +10,9 @@
         },
         "NUMBER_OF_DAYS": 100,
         "HEADLESS": true
+    },
+    "BACTERIA_PROPERTIES":{
+        "STARTING_MAX_AGE": 50,
+        "STARTING_FOOD_FOR_REPRODUCTION": 5
     }
 }
