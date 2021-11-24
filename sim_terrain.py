@@ -22,7 +22,7 @@ class TileGrid:
         return self.map[pos.x][pos.y]
 
 
-class Pos:
+class Position:
     def __init__(self, x, y) -> None:
         self.x = x
         self.y = y
@@ -30,20 +30,37 @@ class Pos:
     def __str__(self) -> str:
         return f"Position x:{self.x} y:{self.y}"
 
-    def is_adjecent_to(self, target_pos):
-        if self.x == target_pos.x:
-            if abs(self.y - target_pos.y) == 1:
-                return True
-        if self.y == target_pos.y:
-            if abs(self.x - target_pos.x) == 1:
-                return True
-        else:
-            return False
+    def __sub__(self, pos) -> int:
+        return abs(pos.x - self.x) + abs(pos.y - self.y)
+
+    def __eq__(self, pos) -> bool:
+        return self.x == pos.x and self.y == pos.y
+
+    def distance_to(self, pos) -> int:
+        return self - pos
+
+    def is_same_position(self, pos) -> bool:
+        return self == pos
+
+    def is_adjacent_to(self, pos) -> bool:
+        return (self - pos) == 1
+
+    def translate(self, direction: str, units: int):
+        if direction == "up":
+            return Position(self.x, self.y - units)
+        elif direction == "right":
+            return Position(self.x + units, self.y)
+        elif direction == "down":
+            return Position(self.x, self.y + units)
+        elif direction == "left":
+            return Position(self.x - units, self.y)
+        elif direction == None:
+            return Position(self.x, self.y)
 
 
 class Tile:
     def __init__(self, x, y) -> None:
-        self.pos = Pos(x, y)
+        self.pos = Position(x, y)
         self.bacteria = False
         self.wall = False
         self.food = False

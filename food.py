@@ -1,4 +1,4 @@
-from sim_terrain import Pos
+from sim_terrain import Position
 
 
 class Food:

@@ -2,9 +2,10 @@ import cv2 as cv
 import numpy as np
 import random
 from load_constants import CONSTANTS
-from sim_terrain import Tile, Wall, Pos, TileGrid
-from bacteria import Bacteria, BacteriaGenome
+from sim_terrain import Tile, Wall, Position, TileGrid
+from bacteria import Bacteria, Genome
 from food import Food
+import matplotlib.pyplot as plt
 
 TILE_SIZE = CONSTANTS["PARAMETERS"]["TILE_SIZE"]
 FIELD_WIDTH = CONSTANTS["PARAMETERS"]["FIELD_WIDTH"]
@@ -13,6 +14,7 @@ NUMBER_OF_DAYS = CONSTANTS["PARAMETERS"]["NUMBER_OF_DAYS"]
 BACKGROUND_COLOR = CONSTANTS["PARAMETERS"]["BACKGROUND_COLOR"]["R"], CONSTANTS[
     "PARAMETERS"]["BACKGROUND_COLOR"]["G"], CONSTANTS["PARAMETERS"][
         "BACKGROUND_COLOR"]["B"]
+HEADLESS = CONSTANTS["PARAMETERS"]["HEADLESS"]
 
 
 def draw_field(field_height, field_width, background_color):
@@ -48,8 +50,8 @@ def draw_bacteria():
 
 
 def find_random_pos():
-    target_pos = Pos(random.randint(0, FIELD_WIDTH - 1),
-                     random.randint(0, FIELD_HEIGHT - 1))
+    target_pos = Position(random.randint(0, FIELD_WIDTH - 1),
+                          random.randint(0, FIELD_HEIGHT - 1))
     return target_pos
 
 
@@ -63,14 +65,14 @@ def find_open_random_pos(max_attempts) -> Tile:
     return target_tile
 
 
-def create_new_bacteria(genome_id, bacteria_id):
+def create_new_bacteria(bacteria_id):
 
-    genome = BacteriaGenome(genome_id)
+    genome = Genome()
     target_tile = find_open_random_pos(100)
     if target_tile == None: return None
     target_tile.bacteria = True
 
-    return Bacteria(bacteria_id, genome, target_tile.pos.x, target_tile.pos.y)
+    return Bacteria(bacteria_id, target_tile.pos.x, target_tile.pos.y)
 
 
 def create_new_wall(id, x, y):
@@ -98,35 +100,38 @@ foods = []
 simmap = draw_field(FIELD_HEIGHT * TILE_SIZE, FIELD_WIDTH * TILE_SIZE,
                     BACKGROUND_COLOR)
 
-draw_walls()
-
 #Frame loop
 for day in range(NUMBER_OF_DAYS):
 
     print(f"day: {day}")
 
     #spawn food
-    if day < 25:
-        new_food = create_food()
-        if new_food != None:
-            foods.append(new_food)
+    if day % 5 == 0:
+        for _ in range(1):
+            new_food = create_food()
+            if new_food != None:
+                foods.append(new_food)
 
     #update age of all bacteria and let them eat
     for bac in bacteria:
         bac.update_age()
         bac.eat(foods)
         if bac.check_survival() == False:
+            bac_tile = tilemap.get_tile_by_pos(bac.pos)
+            bac_tile.bacteria = False
             bacteria.remove(bac)
 
     #add new bacteria
-    if day < 10:
-        new_bac = create_new_bacteria(day, day)
+    if day < 1:
+        new_bac = create_new_bacteria(day)
         if new_bac != None:
             bacteria.append(new_bac)
 
     #check food stock left
     for food in foods:
         if food.check_stock_left() == False:
+            food_tile = tilemap.get_tile_by_pos(food.pos)
+            food_tile.food = False
             foods.remove(food)
 
     new_bacteria = []
@@ -143,13 +148,20 @@ for day in range(NUMBER_OF_DAYS):
     for bac in bacteria:
         bac.move(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
 
+    if len(bacteria) == 0:
+        print(f"bacteria survived for {day} days ")
+        break
+
     #draw background
     simmap = draw_field(FIELD_HEIGHT * TILE_SIZE, FIELD_WIDTH * TILE_SIZE,
                         BACKGROUND_COLOR)
 
-    draw_bacteria()
-    draw_food()
-    print(f"number of bacteria: {len(bacteria)}")
-    cv.imshow("blank", simmap)
-
-    cv.waitKey(0)
+    if HEADLESS == False:
+        draw_bacteria()
+        draw_food()
+        print(f"number of bacteria: {len(bacteria)}")
+        cv.imshow("blank", simmap)
+        cv.waitKey(0)
+    if day % 10 == 0:
+        plt.scatter(day, len(bacteria), color="black")
+plt.show()

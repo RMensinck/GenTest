@@ -1,27 +1,30 @@
 import random
-from sim_terrain import Pos
+from matplotlib.pyplot import colorbar
+from sim_terrain import Position, Tile
+from genome import Genome
 
 
 class Bacteria:
-    def __init__(self, id, genome, x, y):
+    def __init__(self, id, x, y) -> None:
         self.id = id
-        self.genome = genome
-        self.pos = Pos(x, y)
-        self.color = 150, 70, 70
+        self.genome = Genome()
+        self.pos = Position(x, y)
         self.age = 0
-        self.max_age = 100
+        self.max_age = self.genome.max_age
         self.food_eaten = 0
+        self.food_for_reproduction = self.genome.food_for_reproduction
+        self.color = self.genome.color
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Bacteria id: {self.id}"
 
-    def move(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+    def move(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
         target_tile = self.get_random_open_adjecent_tile(
             tilemap, FIELD_WIDTH, FIELD_HEIGHT)
         if target_tile == None: return None
         old_tile = tilemap.get_tile_by_pos(self.pos)
         old_tile.bacteria = False
-        self.pos = Pos(target_tile.pos.x, target_tile.pos.y)
+        self.pos = Position(target_tile.pos.x, target_tile.pos.y)
         new_tile = tilemap.get_tile_by_pos(self.pos)
         new_tile.bacteria = True
 
@@ -32,18 +35,24 @@ class Bacteria:
         if target_tile == None: return None
         target_tile.bacteria = True
 
-        return Bacteria(self.id, BacteriaGenome(self.id), target_tile.pos.x,
-                        target_tile.pos.y)
+        return Bacteria(self.id, target_tile.pos.x, target_tile.pos.y)
 
-    def eat(self, foods):
+    def eat(self, foods) -> None:
 
         for food in foods:
-            if self.pos.is_adjecent_to(food.pos) == True:
+            if self.pos.is_adjacent_to(food.pos) == True:
                 self.food_eaten += 1
                 food.stock -= 1
-                self.color = 0, 200, 0
+                if self.food_eaten == 1:
+                    self.color = 150, 100, 70
+                if self.food_eaten == 2:
+                    self.color = 150, 130, 70
+                if self.food_eaten == 3:
+                    self.color = 150, 160, 70
+                if self.food_eaten > 3:
+                    self.color = 150, 190, 70
 
-    def get_random_direction(self, FIELD_WIDTH, FIELD_HEIGHT):
+    def get_random_direction(self, FIELD_WIDTH, FIELD_HEIGHT) -> str:
 
         #input loc is not on the edge of the field
         if self.pos.x > 0 and self.pos.x < FIELD_WIDTH - 1 and self.pos.y > 0 and self.pos.y < FIELD_HEIGHT - 1:
@@ -72,7 +81,7 @@ class Bacteria:
         return target_direction
 
     def get_random_open_adjecent_tile(self, tilemap, FIELD_WIDTH,
-                                      FIELD_HEIGHT):
+                                      FIELD_HEIGHT) -> Tile:
         direction = self.get_random_direction(FIELD_WIDTH, FIELD_HEIGHT)
         if direction == "up":
             target_tile = tilemap.get_tile(self.pos.x, self.pos.y - 1)
@@ -99,19 +108,11 @@ class Bacteria:
 
         return target_tile
 
-    def check_survival(self):
+    def check_survival(self) -> bool:
         if self.max_age < self.age:
             return False
         else:
             return True
 
-    def update_age(self):
+    def update_age(self) -> None:
         self.age += 1
-
-
-class BacteriaGenome:
-    def __init__(self, id):
-        self.id = id
-
-    def __str__(self):
-        return f"BacteriaGenome id: {self.id}"
