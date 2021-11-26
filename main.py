@@ -17,6 +17,11 @@ BACKGROUND_COLOR = CONSTANTS["PARAMETERS"]["BACKGROUND_COLOR"]["R"], CONSTANTS[
         "BACKGROUND_COLOR"]["B"]
 HEADLESS = CONSTANTS["PARAMETERS"]["HEADLESS"]
 
+START_COLOR = (150, 70, 70)
+START_CAN_KILL = False
+START_MAX_AGE = 30
+START_FOOD_FOR_REPRODUCTION = 3
+
 
 def draw_field(field_height, field_width, background_color):
     simulation_map = np.zeros((field_height, field_width, 3), dtype="uint8")
@@ -74,8 +79,10 @@ def create_new_bacteria(bacteria_id, number_to_spawn) -> None:
         if target_tile != None:
             target_tile.bacteria = True
             bacteria.append(
-                Bacteria(bacteria_id, target_tile.pos,
-                         Genome((150, 70, 70), 50, 5)))
+                Bacteria(
+                    bacteria_id, target_tile.pos,
+                    Genome(START_COLOR, START_MAX_AGE,
+                           START_FOOD_FOR_REPRODUCTION, START_CAN_KILL)))
 
 
 def create_new_wall(id, x, y):
@@ -105,16 +112,16 @@ simulation_map = draw_field(FIELD_HEIGHT * TILE_SIZE, FIELD_WIDTH * TILE_SIZE,
                             BACKGROUND_COLOR)
 
 #Frame loop
-for day in range(NUMBER_OF_DAYS + 99900):
+for day in range(NUMBER_OF_DAYS + 10000):
 
     if day % 100 == 0:
         print(f"day: {day}")
 
     #spawn food
-    if day % 5 == 0:
-        create_food(10)
+    if day % 10 == 0:
+        create_food(5)
     if day == 0:
-        create_food(40)
+        create_food(100)
 
     #add new bacteria
     if day < 1:
@@ -139,6 +146,9 @@ for day in range(NUMBER_OF_DAYS + 99900):
             bac.food_eaten = 0
             if new_bac != None:
                 new_bacteria.append(new_bac)
+
+        if bac.can_kill:
+            bac.kill_adjecent_bacteria(bacteria, tilemap)
         if bac.genome.mutate() == True:
             bac.update_self()
     for bac in new_bacteria:
@@ -170,7 +180,7 @@ for day in range(NUMBER_OF_DAYS + 99900):
         print(f"number of bacteria: {len(bacteria)}")
         cv.imshow("blank", simulation_map)
         cv.waitKey(0)
-    if day % 20 == 0:
+    if day % 5 == 0:
         #plt.scatter(day, len(bacteria), color="black")
         for key in spicies_tracker_dict:
             plt.scatter(
@@ -179,6 +189,4 @@ for day in range(NUMBER_OF_DAYS + 99900):
                 color=(key[2] / 255, key[1] / 255, key[0] /
                        255))  #flipped because colors in open cv are BGR
 
-    if day % 50 == 0:
-        print(spicies_tracker_dict)
 plt.show()

@@ -1,6 +1,5 @@
 import random
 from matplotlib.pyplot import colorbar
-from numpy.lib.function_base import copy
 from sim_terrain import Position, Tile
 from genome import Genome
 
@@ -15,6 +14,7 @@ class Bacteria:
         self.max_age = self.genome.max_age
         self.food_for_reproduction = self.genome.food_for_reproduction
         self.color = self.genome.color
+        self.can_kill = self.genome.can_kill
 
     def __str__(self) -> str:
         return f"Bacteria id: {self.id}"
@@ -45,9 +45,23 @@ class Bacteria:
         if mutated_genome == False:
             return Bacteria(
                 self.id, target_tile.pos,
-                Genome(self.color, self.max_age, self.food_for_reproduction))
+                Genome(self.color, self.max_age, self.food_for_reproduction,
+                       self.can_kill))
         else:
             return Bacteria(self.id, target_tile.pos, mutated_genome)
+
+    """
+    need to register food and bacteria to the tile so we dont need to loop all the food and bacteria
+    """
+
+    def kill_adjecent_bacteria(self, bacteria, tilemap):
+
+        for bac in bacteria:
+            if self.pos.is_adjacent_to(bac.pos) == True:
+                self.food_eaten += 1
+                bacteria_tile = tilemap.get_tile_by_pos(bac.pos)
+                bacteria.remove(bac)
+                bacteria_tile.bacteria = False
 
     def eat(self, foods) -> None:
 
@@ -55,16 +69,25 @@ class Bacteria:
             if self.pos.is_adjacent_to(food.pos) == True:
                 self.food_eaten += 1
                 food.stock -= 1
-                """
-                if self.food_eaten == 1:
-                    self.color = 150, 100, 70
-                if self.food_eaten == 2:
-                    self.color = 150, 130, 70
-                if self.food_eaten == 3:
-                    self.color = 150, 160, 70
-                if self.food_eaten > 3:
-                    self.color = 150, 190, 70
-                """
+
+    def get_adjecent_bacteria(self, tilemap, FIELD_WIDTH,
+                              FIELD_HEIGHT) -> list[Tile]:
+        possible_directions = self.get_possible_directions(
+            FIELD_WIDTH, FIELD_HEIGHT)
+        adjecent_bacteria = []
+        for direction in possible_directions:
+            if direction == "up":
+                target_tile = tilemap.get_tile(self.pos.x, self.pos.y - 1)
+            if direction == "down":
+                target_tile = tilemap.get_tile(self.pos.x, self.pos.y + 1)
+            if direction == "left":
+                target_tile = tilemap.get_tile(self.pos.x - 1, self.pos.y)
+            if direction == "right":
+                target_tile = tilemap.get_tile(self.pos.x + 1, self.pos.y)
+            if target_tile.is_bacteria():
+                adjecent_bacteria.append(target_tile)
+
+        return adjecent_bacteria
 
     def get_random_direction(self, FIELD_WIDTH, FIELD_HEIGHT) -> str:
 
@@ -121,6 +144,33 @@ class Bacteria:
             if attempts >= 10: return None
 
         return target_tile
+
+    def get_possible_directions(self, FIELD_WIDTH, FIELD_HEIGHT) -> list:
+
+        if self.pos.x > 0 and self.pos.x < FIELD_WIDTH - 1 and self.pos.y > 0 and self.pos.y < FIELD_HEIGHT - 1:
+            possible_directions = ["up", "down", "left", "right"]
+
+        #checks if input location is in a corner
+        elif self.pos.x <= 0 and self.pos.y <= 0:
+            possible_directions = ["down", "right"]
+        elif self.pos.x <= 0 and self.pos.y >= FIELD_HEIGHT - 1:
+            possible_directions = ["up", "right"]
+        elif self.pos.x >= FIELD_WIDTH - 1 and self.pos.y <= 0:
+            possible_directions = ["down", "left"]
+        elif self.pos.x >= FIELD_WIDTH - 1 and self.pos.y >= FIELD_HEIGHT - 1:
+            possible_directions = ["up", "left"]
+
+        #if input location is on a edge
+        elif self.pos.x <= 0:
+            possible_directions = ["up", "down", "right"]
+        elif self.pos.x >= FIELD_WIDTH - 1:
+            possible_directions = ["up", "down", "left"]
+        elif self.pos.y <= 0:
+            possible_directions = ["down", "left", "right"]
+        elif self.pos.y >= FIELD_HEIGHT - 1:
+            possible_directions = ["up", "left", "right"]
+
+        return possible_directions
 
     def check_survival(self) -> bool:
         if self.max_age < self.age:
