@@ -1,6 +1,6 @@
 {
     "PARAMETERS":{
-        "FIELD_WIDTH": 50,
+        "FIELD_WIDTH": 30,
         "FIELD_HEIGHT": 30,
         "TILE_SIZE": 20,
         "BACKGROUND_COLOR": {

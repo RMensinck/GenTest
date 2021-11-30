@@ -77,12 +77,12 @@ def create_new_bacteria(bacteria_id, number_to_spawn) -> None:
     for _ in range(number_to_spawn):
         target_tile = find_open_random_pos(100)
         if target_tile != None:
-            target_tile.bacteria = True
-            bacteria.append(
-                Bacteria(
-                    bacteria_id, target_tile.pos,
-                    Genome(START_COLOR, START_MAX_AGE,
-                           START_FOOD_FOR_REPRODUCTION, START_CAN_KILL)))
+            new_bac = Bacteria(
+                bacteria_id, target_tile.pos,
+                Genome(START_COLOR, START_MAX_AGE, START_FOOD_FOR_REPRODUCTION,
+                       START_CAN_KILL))
+            target_tile.bacteria = new_bac
+            bacteria.append(new_bac)
 
 
 def create_new_wall(id, x, y):
@@ -90,16 +90,18 @@ def create_new_wall(id, x, y):
     update before using
     """
     target_tile = tilemap.get_tile(x, y)
-    target_tile.wall = True
-    return Wall(id, x, y)
+    wall = Wall(id, x, y)
+    target_tile.wall = wall
+    return wall
 
 
 def create_food(number_of_foods) -> None:
     for _ in range(number_of_foods):
         target_tile = find_open_random_pos(100)
         if target_tile != None:
-            target_tile.food = True
-            foods.append(Food(target_tile.pos))
+            new_food = Food(target_tile.pos)
+            target_tile.food = new_food
+            foods.append(new_food)
 
 
 #Setup walls and bacteria lists
@@ -112,7 +114,7 @@ simulation_map = draw_field(FIELD_HEIGHT * TILE_SIZE, FIELD_WIDTH * TILE_SIZE,
                             BACKGROUND_COLOR)
 
 #Frame loop
-for day in range(NUMBER_OF_DAYS + 10000):
+for day in range(NUMBER_OF_DAYS + 8000):
 
     if day % 100 == 0:
         print(f"day: {day}")
@@ -138,7 +140,7 @@ for day in range(NUMBER_OF_DAYS + 10000):
         bac.eat(foods)
         if bac.check_survival() == False:
             bac_tile = tilemap.get_tile_by_pos(bac.pos)
-            bac_tile.bacteria = False
+            bac_tile.bacteria = None
             bacteria.remove(bac)
             continue
         if bac.food_eaten >= 3:
@@ -158,7 +160,7 @@ for day in range(NUMBER_OF_DAYS + 10000):
     for food in foods:
         if food.check_stock_left() == False:
             food_tile = tilemap.get_tile_by_pos(food.pos)
-            food_tile.food = False
+            food_tile.food = None
             foods.remove(food)
 
     #check if any bacteria left
@@ -177,11 +179,12 @@ for day in range(NUMBER_OF_DAYS + 10000):
     if HEADLESS == False:
         draw_bacteria()
         draw_food()
-        print(f"number of bacteria: {len(bacteria)}")
         cv.imshow("blank", simulation_map)
         cv.waitKey(0)
+
     if day % 5 == 0:
         #plt.scatter(day, len(bacteria), color="black")
+
         for key in spicies_tracker_dict:
             plt.scatter(
                 day,

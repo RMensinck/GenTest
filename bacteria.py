@@ -23,32 +23,31 @@ class Bacteria:
         self.max_age = self.genome.max_age
         self.food_for_reproduction = self.genome.food_for_reproduction
         self.color = self.genome.color
+        self.can_kill = self.genome.can_kill
 
     def move(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
         target_tile = self.get_random_open_adjecent_tile(
             tilemap, FIELD_WIDTH, FIELD_HEIGHT)
         if target_tile == None: return None
         old_tile = tilemap.get_tile_by_pos(self.pos)
-        old_tile.bacteria = False
+        old_tile.bacteria = None
         self.pos = Position(target_tile.pos.x, target_tile.pos.y)
         new_tile = tilemap.get_tile_by_pos(self.pos)
-        new_tile.bacteria = True
+        new_tile.bacteria = self
 
     def devide(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
 
         target_tile = self.get_random_open_adjecent_tile(
             tilemap, FIELD_WIDTH, FIELD_HEIGHT)
         if target_tile == None: return None
-        target_tile.bacteria = True
+        new_bac = Bacteria(
+            self.id, target_tile.pos,
+            Genome(self.color, self.max_age, self.food_for_reproduction,
+                   self.can_kill))
 
-        mutated_genome = self.genome.mutate()
-        if mutated_genome == False:
-            return Bacteria(
-                self.id, target_tile.pos,
-                Genome(self.color, self.max_age, self.food_for_reproduction,
-                       self.can_kill))
-        else:
-            return Bacteria(self.id, target_tile.pos, mutated_genome)
+        target_tile.bacteria = new_bac
+
+        return new_bac
 
     """
     need to register food and bacteria to the tile so we dont need to loop all the food and bacteria
@@ -61,7 +60,7 @@ class Bacteria:
                 self.food_eaten += 1
                 bacteria_tile = tilemap.get_tile_by_pos(bac.pos)
                 bacteria.remove(bac)
-                bacteria_tile.bacteria = False
+                bacteria_tile.bacteria = None
 
     def eat(self, foods) -> None:
 

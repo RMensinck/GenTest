@@ -61,9 +61,9 @@ class Position:
 class Tile:
     def __init__(self, x, y) -> None:
         self.pos = Position(x, y)
-        self.bacteria = False
-        self.wall = False
-        self.food = False
+        self.bacteria = None
+        self.wall = None
+        self.food = None
 
     def __str__(self) -> str:
         return f"Tile of position {self.pos.x},{self.pos.y}"
@@ -78,7 +78,7 @@ class Tile:
         return self.food
 
     def is_open(self):
-        return self.bacteria == False and self.wall == False and self.food == False
+        return self.bacteria == None and self.wall == None and self.food == None
 
 
 class Wall:
