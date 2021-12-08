@@ -21,6 +21,8 @@ START_COLOR = (150, 70, 70)
 START_CAN_KILL = False
 START_MAX_AGE = 30
 START_FOOD_FOR_REPRODUCTION = 3
+START_GENOME = Genome(START_COLOR, START_MAX_AGE, START_FOOD_FOR_REPRODUCTION,
+                      START_CAN_KILL)
 
 
 def draw_field(field_height, field_width, background_color):
@@ -77,10 +79,7 @@ def create_new_bacteria(bacteria_id, number_to_spawn) -> None:
     for _ in range(number_to_spawn):
         target_tile = find_open_random_pos(100)
         if target_tile != None:
-            new_bac = Bacteria(
-                bacteria_id, target_tile.pos,
-                Genome(START_COLOR, START_MAX_AGE, START_FOOD_FOR_REPRODUCTION,
-                       START_CAN_KILL))
+            new_bac = Bacteria(bacteria_id, target_tile.pos, START_GENOME)
             target_tile.bacteria = new_bac
             bacteria.append(new_bac)
 
@@ -114,7 +113,7 @@ simulation_map = draw_field(FIELD_HEIGHT * TILE_SIZE, FIELD_WIDTH * TILE_SIZE,
                             BACKGROUND_COLOR)
 
 #Frame loop
-for day in range(NUMBER_OF_DAYS + 8000):
+for day in range(NUMBER_OF_DAYS):
 
     if day % 100 == 0:
         print(f"day: {day}")
@@ -175,6 +174,10 @@ for day in range(NUMBER_OF_DAYS + 8000):
     spicies_tracker_dict = DefaultDict(lambda: 0)
     for bac in bacteria:
         spicies_tracker_dict[bac.color] += 1
+
+    if day == 1:
+        for bac in bacteria:
+            print(bac.get_enviroment_dict(tilemap, FIELD_WIDTH, FIELD_HEIGHT))
 
     if HEADLESS == False:
         draw_bacteria()

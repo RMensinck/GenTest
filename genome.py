@@ -13,7 +13,7 @@ class Genome:
         return f"BacteriaGenome id: {self.id}"
 
     def mutate(self) -> bool:
-        if random.randint(1, 10000) == 1:
+        if random.randint(1, 1000) == 1:
             self.color = random.randint(30, 255), random.randint(
                 30, 255), random.randint(30, 120)
             gene_to_mutate = random.choice(

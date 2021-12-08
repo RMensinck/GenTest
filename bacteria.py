@@ -19,6 +19,86 @@ class Bacteria:
     def __str__(self) -> str:
         return f"Bacteria id: {self.id}"
 
+    def get_enviroment_dict(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+        enviroment = {}
+        if self.pos.y > 0:
+            uptile = tilemap.get_tile(self.pos.x, self.pos.y - 1)
+            if uptile.is_open():
+                enviroment["up_tile_empty"] = 1
+                enviroment["up_tile_food"] = 0
+                enviroment["up_tile_bac"] = 0
+            elif uptile.food != None:
+                enviroment["up_tile_empty"] = 0
+                enviroment["up_tile_food"] = 1
+                enviroment["up_tile_bac"] = 0
+            elif uptile.bacteria != None:
+                enviroment["up_tile_empty"] = 0
+                enviroment["up_tile_food"] = 0
+                enviroment["up_tile_bac"] = 1
+        else:
+            enviroment["up_tile_empty"] = 0
+            enviroment["up_tile_food"] = 0
+            enviroment["up_tile_bac"] = 0
+
+        if self.pos.y < FIELD_HEIGHT - 1:
+            downtile = tilemap.get_tile(self.pos.x, self.pos.y + 1)
+            if downtile.is_open():
+                enviroment["down_tile_empty"] = 1
+                enviroment["down_tile_food"] = 0
+                enviroment["down_tile_bac"] = 0
+            elif downtile.food != None:
+                enviroment["down_tile_empty"] = 0
+                enviroment["down_tile_food"] = 1
+                enviroment["down_tile_bac"] = 0
+            elif downtile.bacteria != None:
+                enviroment["down_tile_empty"] = 0
+                enviroment["down_tile_food"] = 0
+                enviroment["down_tile_bac"] = 1
+        else:
+            enviroment["down_tile_empty"] = 0
+            enviroment["down_tile_food"] = 0
+            enviroment["down_tile_bac"] = 0
+
+        if self.pos.x > 0:
+            lefttile = tilemap.get_tile(self.pos.x - 1, self.pos.y)
+            if lefttile.is_open():
+                enviroment["left_tile_empty"] = 1
+                enviroment["left_tile_food"] = 0
+                enviroment["left_tile_bac"] = 0
+            elif lefttile.food != None:
+                enviroment["left_tile_empty"] = 0
+                enviroment["left_tile_food"] = 1
+                enviroment["left_tile_bac"] = 0
+            elif lefttile.bacteria != None:
+                enviroment["left_tile_empty"] = 0
+                enviroment["left_tile_food"] = 0
+                enviroment["left_tile_bac"] = 1
+        else:
+            enviroment["left_tile_empty"] = 0
+            enviroment["left_tile_food"] = 0
+            enviroment["left_tile_bac"] = 0
+
+        if self.pos.x < FIELD_WIDTH - 1:
+            righttile = tilemap.get_tile(self.pos.x + 1, self.pos.y)
+            if righttile.is_open():
+                enviroment["right_tile_empty"] = 1
+                enviroment["right_tile_food"] = 0
+                enviroment["right_tile_bac"] = 0
+            elif righttile.food != None:
+                enviroment["right_tile_empty"] = 0
+                enviroment["right_tile_food"] = 1
+                enviroment["right_tile_bac"] = 0
+            elif righttile.bacteria != None:
+                enviroment["right_tile_empty"] = 0
+                enviroment["right_tile_food"] = 0
+                enviroment["right_tile_bac"] = 1
+        else:
+            enviroment["right_tile_empty"] = 0
+            enviroment["right_tile_food"] = 0
+            enviroment["right_tile_bac"] = 0
+
+        return enviroment
+
     def update_self(self) -> None:
         self.max_age = self.genome.max_age
         self.food_for_reproduction = self.genome.food_for_reproduction
