@@ -1,19 +1,25 @@
 import random
+import numpy as np
 
 
 class Genome:
-    def __init__(self, color, max_age, food_for_reproduction,
-                 can_kill) -> None:
+    def __init__(self, color, max_age, food_for_reproduction, can_kill,
+                 mutation_odds) -> None:
         self.color = color
         self.max_age = max_age
         self.food_for_reproduction = food_for_reproduction
         self.can_kill = can_kill
+        self.mutation_odds = mutation_odds
+
+        self.weights_l1 = np.random.randn(13, 10)
+        self.weights_l2 = np.random.randn(10, 10)
+        self.weights_l3 = np.random.randn(10, 6)
 
     def __str__(self) -> str:
         return f"BacteriaGenome id: {self.id}"
 
     def mutate(self) -> bool:
-        if random.randint(1, 1000) == 1:
+        if random.randint(1, 5000) == 1:
             self.color = random.randint(30, 255), random.randint(
                 30, 255), random.randint(30, 120)
             gene_to_mutate = random.choice(

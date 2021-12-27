@@ -1,7 +1,7 @@
 import random
-from matplotlib.pyplot import colorbar
 from sim_terrain import Position, Tile
 from genome import Genome
+from brain import Brain
 
 
 class Bacteria:
@@ -15,11 +15,17 @@ class Bacteria:
         self.food_for_reproduction = self.genome.food_for_reproduction
         self.color = self.genome.color
         self.can_kill = self.genome.can_kill
+        self.brain = Brain(10, self.genome.weights_l1, self.genome.weights_l2,
+                           self.genome.weights_l3)
 
     def __str__(self) -> str:
         return f"Bacteria id: {self.id}"
 
-    def get_enviroment_dict(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+    def get_action(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+        return self.brain.get_output(
+            self.get_enviroment_dict(tilemap, FIELD_WIDTH, FIELD_HEIGHT))
+
+    def get_enviroment_dict(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> dict:
         enviroment = {}
         if self.pos.y > 0:
             uptile = tilemap.get_tile(self.pos.x, self.pos.y - 1)
@@ -97,6 +103,8 @@ class Bacteria:
             enviroment["right_tile_food"] = 0
             enviroment["right_tile_bac"] = 0
 
+        enviroment["food_eaten"] = self.food_eaten
+
         return enviroment
 
     def update_self(self) -> None:
@@ -105,6 +113,7 @@ class Bacteria:
         self.color = self.genome.color
         self.can_kill = self.genome.can_kill
 
+    #moves the bacteria randomly
     def move(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
         target_tile = self.get_random_open_adjecent_tile(
             tilemap, FIELD_WIDTH, FIELD_HEIGHT)
@@ -115,7 +124,38 @@ class Bacteria:
         new_tile = tilemap.get_tile_by_pos(self.pos)
         new_tile.bacteria = self
 
-    def devide(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+    def move_to_tile(self, tilemap, target_tile):
+        old_tile = tilemap.get_tile_by_pos(self.pos)
+        old_tile.bacteria = None
+        self.pos = Position(target_tile.pos.x, target_tile.pos.y)
+        new_tile = tilemap.get_tile_by_pos(self.pos)
+        new_tile.bacteria = self
+
+    def move_up(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+        if "up" in self.get_possible_directions(FIELD_WIDTH, FIELD_HEIGHT):
+            target_tile = tilemap.get_tile(self.pos.x, self.pos.y - 1)
+            if target_tile.is_open():
+                self.move_to_tile(tilemap, target_tile)
+
+    def move_down(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+        if "down" in self.get_possible_directions(FIELD_WIDTH, FIELD_HEIGHT):
+            target_tile = tilemap.get_tile(self.pos.x, self.pos.y + 1)
+            if target_tile.is_open():
+                self.move_to_tile(tilemap, target_tile)
+
+    def move_left(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+        if "left" in self.get_possible_directions(FIELD_WIDTH, FIELD_HEIGHT):
+            target_tile = tilemap.get_tile(self.pos.x - 1, self.pos.y)
+            if target_tile.is_open():
+                self.move_to_tile(tilemap, target_tile)
+
+    def move_right(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+        if "right" in self.get_possible_directions(FIELD_WIDTH, FIELD_HEIGHT):
+            target_tile = tilemap.get_tile(self.pos.x + 1, self.pos.y)
+            if target_tile.is_open():
+                self.move_to_tile(tilemap, target_tile)
+
+    def devide(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT, MUTATION_ODDS):
 
         target_tile = self.get_random_open_adjecent_tile(
             tilemap, FIELD_WIDTH, FIELD_HEIGHT)
@@ -123,7 +163,7 @@ class Bacteria:
         new_bac = Bacteria(
             self.id, target_tile.pos,
             Genome(self.color, self.max_age, self.food_for_reproduction,
-                   self.can_kill))
+                   self.can_kill, MUTATION_ODDS))
 
         target_tile.bacteria = new_bac
 

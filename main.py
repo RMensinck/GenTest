@@ -16,13 +16,13 @@ BACKGROUND_COLOR = CONSTANTS["PARAMETERS"]["BACKGROUND_COLOR"]["R"], CONSTANTS[
     "PARAMETERS"]["BACKGROUND_COLOR"]["G"], CONSTANTS["PARAMETERS"][
         "BACKGROUND_COLOR"]["B"]
 HEADLESS = CONSTANTS["PARAMETERS"]["HEADLESS"]
+MUTATION_ODDS = CONSTANTS["PARAMETERS"]["MUTATION_ODDS"]
 
-START_COLOR = (150, 70, 70)
 START_CAN_KILL = False
-START_MAX_AGE = 30
-START_FOOD_FOR_REPRODUCTION = 3
-START_GENOME = Genome(START_COLOR, START_MAX_AGE, START_FOOD_FOR_REPRODUCTION,
-                      START_CAN_KILL)
+START_MAX_AGE_MIN = 30
+START_MAX_AGE_MAX = 100
+START_FOOD_FOR_REPRODUCTION_MIN = 1
+START_FOOD_FOR_REPRODUCTION_MAX = 5
 
 
 def draw_field(field_height, field_width, background_color):
@@ -79,7 +79,14 @@ def create_new_bacteria(bacteria_id, number_to_spawn) -> None:
     for _ in range(number_to_spawn):
         target_tile = find_open_random_pos(100)
         if target_tile != None:
-            new_bac = Bacteria(bacteria_id, target_tile.pos, START_GENOME)
+            new_bac = Bacteria(
+                bacteria_id, target_tile.pos,
+                Genome((random.randint(0, 255), random.randint(
+                    0, 255), random.randint(0, 255)),
+                       random.randint(START_MAX_AGE_MIN, START_MAX_AGE_MAX),
+                       random.randint(START_FOOD_FOR_REPRODUCTION_MIN,
+                                      START_FOOD_FOR_REPRODUCTION_MAX),
+                       START_CAN_KILL, MUTATION_ODDS))
             target_tile.bacteria = new_bac
             bacteria.append(new_bac)
 
@@ -108,91 +115,122 @@ tilemap = TileGrid(FIELD_WIDTH, FIELD_HEIGHT, TILE_SIZE)
 walls = []
 bacteria = []
 foods = []
-
 simulation_map = draw_field(FIELD_HEIGHT * TILE_SIZE, FIELD_WIDTH * TILE_SIZE,
                             BACKGROUND_COLOR)
 
-#Frame loop
-for day in range(NUMBER_OF_DAYS):
 
-    if day % 100 == 0:
-        print(f"day: {day}")
+def simulate():
+    global bacteria
+    global tilemap
+    global foods
+    global simulation_map
 
-    #spawn food
-    if day % 10 == 0:
-        create_food(5)
-    if day == 0:
-        create_food(100)
-
-    #add new bacteria
-    if day < 1:
-        create_new_bacteria(1, 3)
-
-    #move all bacteria arround randomly
-    for bac in bacteria:
-        bac.move(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
-
-    #update age of all bacteria and let them eat
-    new_bacteria = []
-    for bac in bacteria:
-        bac.update_age()
-        bac.eat(foods)
-        if bac.check_survival() == False:
-            bac_tile = tilemap.get_tile_by_pos(bac.pos)
-            bac_tile.bacteria = None
-            bacteria.remove(bac)
-            continue
-        if bac.food_eaten >= 3:
-            new_bac = bac.devide(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
-            bac.food_eaten = 0
-            if new_bac != None:
-                new_bacteria.append(new_bac)
-
-        if bac.can_kill:
-            bac.kill_adjecent_bacteria(bacteria, tilemap)
-        if bac.genome.mutate() == True:
-            bac.update_self()
-    for bac in new_bacteria:
-        bacteria.append(bac)
-
-    #check food stock left
-    for food in foods:
-        if food.check_stock_left() == False:
-            food_tile = tilemap.get_tile_by_pos(food.pos)
-            food_tile.food = None
-            foods.remove(food)
-
-    #check if any bacteria left
-    if len(bacteria) == 0:
-        print(f"bacteria survived for {day} days ")
-        break
-
-    #draw background
+    tilemap = TileGrid(FIELD_WIDTH, FIELD_HEIGHT, TILE_SIZE)
+    walls = []
+    bacteria = []
+    foods = []
     simulation_map = draw_field(FIELD_HEIGHT * TILE_SIZE,
                                 FIELD_WIDTH * TILE_SIZE, BACKGROUND_COLOR)
 
-    spicies_tracker_dict = DefaultDict(lambda: 0)
-    for bac in bacteria:
-        spicies_tracker_dict[bac.color] += 1
+    #Frame loop
+    for day in range(1000):
 
-    if day == 1:
+        #if day % 100 == 0:
+        #print(f"day: {day}")
+
+        #spawn food
+        if day % 10 == 0:
+            create_food(8)
+        if day == 0:
+            create_food(100)
+
+        #add new bacteria
+        if day < 1:
+            create_new_bacteria(1, 100)
+        """
+        #move all bacteria arround randomly
         for bac in bacteria:
-            print(bac.get_enviroment_dict(tilemap, FIELD_WIDTH, FIELD_HEIGHT))
+            bac.move(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
+        """
+        #update age of all bacteria and let them eat
+        new_bacteria = []
+        for bac in bacteria:
+            bac.update_age()
+            if bac.check_survival() == False:
+                bac_tile = tilemap.get_tile_by_pos(bac.pos)
+                bac_tile.bacteria = None
+                bacteria.remove(bac)
+                continue
+            """
+            if bac.can_kill:
+                bac.kill_adjecent_bacteria(bacteria, tilemap)
+            if bac.genome.mutate() == True:
+                bac.update_self()
+            """
+            #TESTING
+            action = bac.get_action(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
 
-    if HEADLESS == False:
-        draw_bacteria()
-        draw_food()
-        cv.imshow("blank", simulation_map)
-        cv.waitKey(0)
+            if action == "move up":
+                bac.move_up(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
+            if action == "move down":
+                bac.move_down(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
+            if action == "move left":
+                bac.move_left(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
+            if action == "move right":
+                bac.move_right(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
+            if action == "eat":
+                bac.eat(foods)
+            if action == "devide":
+                if bac.food_eaten >= 3:
+                    new_bac = bac.devide(tilemap, FIELD_WIDTH, FIELD_HEIGHT,
+                                         MUTATION_ODDS)
+                    bac.food_eaten = 0
+                    if new_bac != None:
+                        new_bacteria.append(new_bac)
 
-    if day % 5 == 0:
-        #plt.scatter(day, len(bacteria), color="black")
+        for bac in new_bacteria:
+            bacteria.append(bac)
 
-        for key in spicies_tracker_dict:
-            plt.scatter(
-                day,
-                spicies_tracker_dict[key],
-                color=(key[2] / 255, key[1] / 255, key[0] /
-                       255))  #flipped because colors in open cv are BGR
+        #check food stock left
+        for food in foods:
+            if food.check_stock_left() == False:
+                food_tile = tilemap.get_tile_by_pos(food.pos)
+                food_tile.food = None
+                foods.remove(food)
 
-plt.show()
+        #check if any bacteria left
+        if len(bacteria) == 0:
+            print(f"bacteria survived for {day} days ")
+            break
+
+        #draw background
+        simulation_map = draw_field(FIELD_HEIGHT * TILE_SIZE,
+                                    FIELD_WIDTH * TILE_SIZE, BACKGROUND_COLOR)
+
+        spicies_tracker_dict = DefaultDict(lambda: 0)
+        for bac in bacteria:
+            spicies_tracker_dict[bac.color] += 1
+
+        if HEADLESS == False:
+            draw_bacteria()
+            draw_food()
+            cv.imshow("blank", simulation_map)
+            cv.waitKey(0)
+
+        if day % 3 == 0:
+            #plt.scatter(day, len(bacteria), color="black")
+
+            for key in spicies_tracker_dict:
+                if spicies_tracker_dict[key] > 5:
+                    plt.scatter(
+                        day,
+                        spicies_tracker_dict[key],
+                        color=(
+                            key[2] / 255, key[1] / 255, key[0] /
+                            255))  #flipped because colors in open cv are BGR
+
+    plt.show()
+
+
+for d in range(100):
+    simulate()

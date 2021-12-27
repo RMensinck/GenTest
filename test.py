@@ -1,11 +1,9 @@
-enviroment = {}
-enviroment["y+1"] = 10
+import numpy as np
 
-remco = 47.18 + 78.18 + 330 + 69 + 130.80 + 128 + 71.96 + 95.54
-jarin = 35
+array = np.array([[2, 4, 9, 5, 8, 5]])
 
-totaal = jarin + remco
-
-kosten_pp = totaal / 3
-
-print(kosten_pp)
+print(np.amax(array))
+print("Hightest index:")
+highest = np.where(array == np.amax(array))
+print(highest)
+print(highest[1][0])

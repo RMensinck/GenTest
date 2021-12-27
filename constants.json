@@ -9,10 +9,7 @@
             "B": 222
         },
         "NUMBER_OF_DAYS": 200,
-        "HEADLESS": false
-    },
-    "BACTERIA_PROPERTIES":{
-        "STARTING_MAX_AGE": 50,
-        "STARTING_FOOD_FOR_REPRODUCTION": 5
+        "HEADLESS": true,
+        "MUTATION_ODDS": 5000
     }
 }

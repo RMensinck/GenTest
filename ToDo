@@ -1,12 +1,7 @@
-pos system updaten
-
-headless toggle maken
-
 sporen class maken
 
-main.py overzichtelijker maken
+foodstock check verbeteren
 
-mutaties maken
+forloops voor kill en food veranderen naar uitlezen uit tilemap
 
-manier maken om hoeveelheid verschillende mutaties in matplotlib weer te geven
-
+bacteria een id geven ipv catagoriseren op kleur
