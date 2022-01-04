@@ -7,6 +7,7 @@ from brain import Brain
 class Bacteria:
     def __init__(self, id, pos, genome) -> None:
         self.id = id
+        self.score = 0
         self.genome = genome
         self.pos = pos
         self.age = 0
@@ -14,14 +15,13 @@ class Bacteria:
         self.max_age = self.genome.max_age
         self.food_for_reproduction = self.genome.food_for_reproduction
         self.color = self.genome.color
-        self.can_kill = self.genome.can_kill
         self.brain = Brain(10, self.genome.weights_l1, self.genome.weights_l2,
                            self.genome.weights_l3)
 
     def __str__(self) -> str:
         return f"Bacteria id: {self.id}"
 
-    def get_action(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+    def get_action(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> str:
         return self.brain.get_output(
             self.get_enviroment_dict(tilemap, FIELD_WIDTH, FIELD_HEIGHT))
 
@@ -124,36 +124,40 @@ class Bacteria:
         new_tile = tilemap.get_tile_by_pos(self.pos)
         new_tile.bacteria = self
 
-    def move_to_tile(self, tilemap, target_tile):
+    def move_to_tile(self, tilemap, target_tile) -> None:
         old_tile = tilemap.get_tile_by_pos(self.pos)
         old_tile.bacteria = None
         self.pos = Position(target_tile.pos.x, target_tile.pos.y)
         new_tile = tilemap.get_tile_by_pos(self.pos)
         new_tile.bacteria = self
 
-    def move_up(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+    def move_up(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
         if "up" in self.get_possible_directions(FIELD_WIDTH, FIELD_HEIGHT):
             target_tile = tilemap.get_tile(self.pos.x, self.pos.y - 1)
             if target_tile.is_open():
                 self.move_to_tile(tilemap, target_tile)
+                self.score += 1
 
-    def move_down(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+    def move_down(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
         if "down" in self.get_possible_directions(FIELD_WIDTH, FIELD_HEIGHT):
             target_tile = tilemap.get_tile(self.pos.x, self.pos.y + 1)
             if target_tile.is_open():
                 self.move_to_tile(tilemap, target_tile)
+                self.score += 1
 
-    def move_left(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+    def move_left(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
         if "left" in self.get_possible_directions(FIELD_WIDTH, FIELD_HEIGHT):
             target_tile = tilemap.get_tile(self.pos.x - 1, self.pos.y)
             if target_tile.is_open():
                 self.move_to_tile(tilemap, target_tile)
+                self.score += 1
 
-    def move_right(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT):
+    def move_right(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
         if "right" in self.get_possible_directions(FIELD_WIDTH, FIELD_HEIGHT):
             target_tile = tilemap.get_tile(self.pos.x + 1, self.pos.y)
             if target_tile.is_open():
                 self.move_to_tile(tilemap, target_tile)
+                self.score += 1
 
     def devide(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT, MUTATION_ODDS):
 
@@ -163,7 +167,8 @@ class Bacteria:
         new_bac = Bacteria(
             self.id, target_tile.pos,
             Genome(self.color, self.max_age, self.food_for_reproduction,
-                   self.can_kill, MUTATION_ODDS))
+                   self.genome.weights_l1, self.genome.weights_l2,
+                   self.genome.weights_l3))
 
         target_tile.bacteria = new_bac
 
@@ -173,7 +178,7 @@ class Bacteria:
     need to register food and bacteria to the tile so we dont need to loop all the food and bacteria
     """
 
-    def kill_adjecent_bacteria(self, bacteria, tilemap):
+    def kill_adjecent_bacteria(self, bacteria, tilemap) -> None:
 
         for bac in bacteria:
             if self.pos.is_adjacent_to(bac.pos) == True:
@@ -188,6 +193,8 @@ class Bacteria:
             if self.pos.is_adjacent_to(food.pos) == True:
                 self.food_eaten += 1
                 food.stock -= 1
+                if self.food_eaten < self.food_for_reproduction:
+                    self.score += 5
 
     def get_adjecent_bacteria(self, tilemap, FIELD_WIDTH,
                               FIELD_HEIGHT) -> list[Tile]:
@@ -299,3 +306,19 @@ class Bacteria:
 
     def update_age(self) -> None:
         self.age += 1
+
+    def get_random_spawn_pos(self, tilemap, FIELD_WIDTH,
+                             FIELD_HEIGHT) -> Position:
+        attempts = 0
+        possible_pos = Position(random.randint(0, FIELD_WIDTH - 1),
+                                random.randint(0, FIELD_HEIGHT - 1))
+        target_tile = tilemap.get_tile_by_pos(possible_pos)
+        while target_tile.is_open() == False:
+            possible_pos = Position(random.randint(0, FIELD_WIDTH - 1),
+                                    random.randint(0, FIELD_HEIGHT - 1))
+            target_tile = tilemap.get_tile_by_pos(possible_pos)
+            attempts += 1
+            if attempts >= 100:
+                print("No possible spawn position for the bacteria")
+                break
+        return possible_pos

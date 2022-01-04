@@ -1,3 +1,4 @@
+from copy import copy, error
 from typing import DefaultDict
 import cv2 as cv
 import numpy as np
@@ -18,20 +19,21 @@ BACKGROUND_COLOR = CONSTANTS["PARAMETERS"]["BACKGROUND_COLOR"]["R"], CONSTANTS[
 HEADLESS = CONSTANTS["PARAMETERS"]["HEADLESS"]
 MUTATION_ODDS = CONSTANTS["PARAMETERS"]["MUTATION_ODDS"]
 
-START_CAN_KILL = False
-START_MAX_AGE_MIN = 30
-START_MAX_AGE_MAX = 100
-START_FOOD_FOR_REPRODUCTION_MIN = 1
-START_FOOD_FOR_REPRODUCTION_MAX = 5
+START_MAX_AGE_MIN = 50
+START_MAX_AGE_MAX = 50
+START_FOOD_FOR_REPRODUCTION_MIN = 2
+START_FOOD_FOR_REPRODUCTION_MAX = 2
+
+GENERATION_SIZE = 50
 
 
-def draw_field(field_height, field_width, background_color):
+def draw_field(field_height, field_width, background_color) -> np.array:
     simulation_map = np.zeros((field_height, field_width, 3), dtype="uint8")
     simulation_map[:] = background_color
     return simulation_map
 
 
-def draw_walls():
+def draw_walls() -> None:
     for wall in walls:
         cv.rectangle(simulation_map,
                      (wall.start_x * TILE_SIZE, wall.start_y * TILE_SIZE),
@@ -39,7 +41,7 @@ def draw_walls():
                      wall.color, cv.FILLED)
 
 
-def draw_food():
+def draw_food() -> None:
     for food in foods:
         cv.rectangle(simulation_map,
                      (food.pos.x * TILE_SIZE, food.pos.y * TILE_SIZE),
@@ -48,7 +50,7 @@ def draw_food():
                      cv.FILLED)
 
 
-def draw_bacteria():
+def draw_bacteria() -> None:
     for bac in bacteria:
         if bacteria == None:
             pass
@@ -59,7 +61,7 @@ def draw_bacteria():
                      cv.FILLED)
 
 
-def find_random_pos():
+def find_random_pos() -> Position:
     target_pos = Position(random.randint(0, FIELD_WIDTH - 1),
                           random.randint(0, FIELD_HEIGHT - 1))
     return target_pos
@@ -81,17 +83,18 @@ def create_new_bacteria(bacteria_id, number_to_spawn) -> None:
         if target_tile != None:
             new_bac = Bacteria(
                 bacteria_id, target_tile.pos,
-                Genome((random.randint(0, 255), random.randint(
-                    0, 255), random.randint(0, 255)),
-                       random.randint(START_MAX_AGE_MIN, START_MAX_AGE_MAX),
-                       random.randint(START_FOOD_FOR_REPRODUCTION_MIN,
-                                      START_FOOD_FOR_REPRODUCTION_MAX),
-                       START_CAN_KILL, MUTATION_ODDS))
+                Genome(
+                    get_random_color(),
+                    random.randint(START_MAX_AGE_MIN, START_MAX_AGE_MAX),
+                    random.randint(START_FOOD_FOR_REPRODUCTION_MIN,
+                                   START_FOOD_FOR_REPRODUCTION_MAX),
+                    np.random.randn(13, 10), np.random.randn(10, 10),
+                    np.random.randn(10, 6)))
             target_tile.bacteria = new_bac
             bacteria.append(new_bac)
 
 
-def create_new_wall(id, x, y):
+def create_new_wall(id, x, y) -> Wall:
     """
     update before using
     """
@@ -110,6 +113,69 @@ def create_food(number_of_foods) -> None:
             foods.append(new_food)
 
 
+def get_random_color() -> tuple:
+    return random.randint(0, 255), random.randint(0,
+                                                  255), random.randint(0, 255)
+
+
+def tournament_selection(input_generation) -> tuple:
+    participants = random.sample(input_generation, 4)
+
+    if participants[0].score > participants[1].score:
+        winner1 = participants[0]
+    else:
+        winner1 = participants[1]
+
+    if participants[2].score > participants[3].score:
+        winner2 = participants[2]
+    else:
+        winner2 = participants[3]
+
+    return winner1, winner2
+
+
+def crossover(winner1, winner2) -> None:
+
+    if random.randint(1, 100) <= 30:
+        weight_to_mutate = random.choice(["l1", "l2", "l3"])
+
+        if weight_to_mutate == "l1":
+            target_weights_1 = winner1.genome.weights_l1
+            target_weights_2 = winner2.genome.weights_l1
+
+        if weight_to_mutate == "l2":
+            target_weights_1 = winner1.genome.weights_l2
+            target_weights_2 = winner2.genome.weights_l2
+
+        if weight_to_mutate == "l3":
+            target_weights_1 = winner1.genome.weights_l3
+            target_weights_2 = winner2.genome.weights_l3
+
+        weights_1 = copy(target_weights_1)
+        weights_2 = copy(target_weights_2)
+
+        if weights_1.shape != weights_2.shape: raise error
+        original_shape = weights_1.shape
+        weights_length = len(weights_1)
+
+        weights_1 = weights_1.flatten()
+        weights_2 = weights_2.flatten()
+
+        crossover_point = random.randint(1, weights_length - 1)
+
+        new_1 = np.concatenate(
+            (weights_1[:crossover_point], weights_2[crossover_point:]))
+        new_2 = np.concatenate(
+            (weights_2[:crossover_point], weights_1[crossover_point:]))
+
+        target_weights_1 = np.reshape(new_1, original_shape)
+        target_weights_2 = np.reshape(new_2, original_shape)
+        winner1.color = (random.randint(1, 255), random.randint(1, 255),
+                         random.randint(1, 255))
+        winner2.color = (random.randint(1, 255), random.randint(1, 255),
+                         random.randint(1, 255))
+
+
 #Setup walls and bacteria lists
 tilemap = TileGrid(FIELD_WIDTH, FIELD_HEIGHT, TILE_SIZE)
 walls = []
@@ -119,7 +185,7 @@ simulation_map = draw_field(FIELD_HEIGHT * TILE_SIZE, FIELD_WIDTH * TILE_SIZE,
                             BACKGROUND_COLOR)
 
 
-def simulate():
+def simulate(input_bacteria=None, headless=HEADLESS) -> dict:
     global bacteria
     global tilemap
     global foods
@@ -129,30 +195,32 @@ def simulate():
     walls = []
     bacteria = []
     foods = []
+    devided_bacteria = []
     simulation_map = draw_field(FIELD_HEIGHT * TILE_SIZE,
                                 FIELD_WIDTH * TILE_SIZE, BACKGROUND_COLOR)
 
     #Frame loop
     for day in range(1000):
+        #add new bacteria
+        if day < 1 and input_bacteria == None:
+            create_new_bacteria(1, 50)
 
-        #if day % 100 == 0:
-        #print(f"day: {day}")
+        if input_bacteria != None:
+            bacteria = input_bacteria
 
         #spawn food
-        if day % 10 == 0:
-            create_food(8)
+        if day % 5 == 0 and len(foods) > 40:
+            create_food(5)
         if day == 0:
-            create_food(100)
+            create_food(40)
 
-        #add new bacteria
-        if day < 1:
-            create_new_bacteria(1, 100)
-        """
-        #move all bacteria arround randomly
-        for bac in bacteria:
-            bac.move(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
-        """
-        #update age of all bacteria and let them eat
+        if headless == False:
+            draw_bacteria()
+            draw_food()
+            cv.imshow("blank", simulation_map)
+            cv.waitKey(0)
+
+        #update age of all bacteria
         new_bacteria = []
         for bac in bacteria:
             bac.update_age()
@@ -161,13 +229,7 @@ def simulate():
                 bac_tile.bacteria = None
                 bacteria.remove(bac)
                 continue
-            """
-            if bac.can_kill:
-                bac.kill_adjecent_bacteria(bacteria, tilemap)
-            if bac.genome.mutate() == True:
-                bac.update_self()
-            """
-            #TESTING
+
             action = bac.get_action(tilemap, FIELD_WIDTH, FIELD_HEIGHT)
 
             if action == "move up":
@@ -187,6 +249,10 @@ def simulate():
                     bac.food_eaten = 0
                     if new_bac != None:
                         new_bacteria.append(new_bac)
+                        if bac not in devided_bacteria:
+                            if bac != None:
+                                devided_bacteria.append(bac)
+                        bac.score += 25
 
         for bac in new_bacteria:
             bacteria.append(bac)
@@ -211,15 +277,8 @@ def simulate():
         for bac in bacteria:
             spicies_tracker_dict[bac.color] += 1
 
-        if HEADLESS == False:
-            draw_bacteria()
-            draw_food()
-            cv.imshow("blank", simulation_map)
-            cv.waitKey(0)
-
         if day % 3 == 0:
             #plt.scatter(day, len(bacteria), color="black")
-
             for key in spicies_tracker_dict:
                 if spicies_tracker_dict[key] > 5:
                     plt.scatter(
@@ -228,9 +287,86 @@ def simulate():
                         color=(
                             key[2] / 255, key[1] / 255, key[0] /
                             255))  #flipped because colors in open cv are BGR
+    if headless == False:
+        plt.show()
 
-    plt.show()
+    return devided_bacteria
 
 
-for d in range(100):
-    simulate()
+def simulate_multiple_generations(number_of_generations) -> list[Bacteria]:
+    def future_generation(input_generation,
+                          generation,
+                          headless=HEADLESS) -> list[Bacteria]:
+        next_generation = []
+        run = 1
+        while len(next_generation) < GENERATION_SIZE:
+            if run == 1 and generation % 50 == 0:
+                headless = False
+            else:
+                headless = True
+            for bac in input_generation:
+                bac.age = 0
+                bac.pos = bac.get_random_spawn_pos(tilemap, FIELD_WIDTH,
+                                                   FIELD_HEIGHT)
+                bac.color = get_random_color()
+                bac.score = 0
+
+            devided_bacteria = simulate(copy(input_generation),
+                                        headless=headless)
+            for bac in devided_bacteria:
+                next_generation.append(bac)
+            print(len(next_generation))
+            run += 1
+        while len(next_generation) > GENERATION_SIZE:
+            next_generation.pop()
+
+        return next_generation
+
+    #create first generation
+    first_gen = []
+    run = 1
+    print("generation 1")
+    while len(first_gen) < GENERATION_SIZE:
+        devided_bacteria = simulate()
+        for bac in devided_bacteria:
+            first_gen.append(bac)
+        print(len(first_gen))
+        run += 1
+
+    while len(first_gen) > GENERATION_SIZE:
+        first_gen.pop()
+
+    #tournament selection first generation
+    next_gen = []
+    for _ in range(GENERATION_SIZE // 2):
+        winners = tournament_selection(first_gen)
+        crossover(winners[0], winners[1])
+        next_gen.append(copy(winners[0]))
+        next_gen.append(copy(winners[1]))
+
+    #create the following generations
+    input_generation = next_gen
+    generation = 2
+
+    while generation <= number_of_generations:
+        print(f"generation {generation}")
+        next_generation = future_generation(input_generation, generation)
+        next_generation_crossed = []
+        for _ in range(GENERATION_SIZE // 2):
+            winners = tournament_selection(next_generation)
+            crossover(winners[0], winners[1])
+            next_generation_crossed.append(copy(winners[0]))
+            next_generation_crossed.append(copy(winners[1]))
+        input_generation = next_generation_crossed
+        generation += 1
+
+    final_generation = input_generation
+    return final_generation
+
+
+def main() -> None:
+    print(simulate_multiple_generations(2000))
+
+
+if __name__ == "__main__":
+    main()

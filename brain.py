@@ -8,7 +8,8 @@ zorgen dat self.n_inputs dynamisch wordt
 
 
 class Brain:
-    def __init__(self, neurons_per_layer, weights_l1, weights_l2, weights_l3):
+    def __init__(self, neurons_per_layer, weights_l1, weights_l2,
+                 weights_l3) -> None:
 
         self.n_inputs = 13
         self.n_neurons = neurons_per_layer
@@ -22,7 +23,7 @@ class Brain:
         self.dense3 = self.Layer_Dense(weights_l3, len(self.actions))
         self.activation3 = self.Activation_Softmax()
 
-    def get_output(self, enviorment_list):
+    def get_output(self, enviorment_list) -> str:
         input_list = self.make_input_list(enviorment_list)
         self.dense1.forward(input_list)
         self.activation1.forward(self.dense1.output)
@@ -36,7 +37,7 @@ class Brain:
         action = self.actions[highest_output_index]
         return action
 
-    def make_input_list(self, enviorment_list):
+    def make_input_list(self, enviorment_list) -> np.array:
         input_list = np.array([
             enviorment_list["up_tile_empty"], enviorment_list["up_tile_food"],
             enviorment_list["up_tile_bac"], enviorment_list['down_tile_empty'],
@@ -52,19 +53,19 @@ class Brain:
         return input_list
 
     class Layer_Dense:
-        def __init__(self, weights, n_neurons):
+        def __init__(self, weights, n_neurons) -> None:
             self.weights = weights
             self.biases = np.zeros((1, n_neurons))
 
-        def forward(self, inputs):
+        def forward(self, inputs) -> None:
             self.output = np.dot(inputs, self.weights) + self.biases
 
     class Activation_ReLU:
-        def forward(self, inputs):
+        def forward(self, inputs) -> None:
             self.output = np.maximum(0, inputs)
 
     class Activation_Softmax:
-        def forward(self, inputs):
+        def forward(self, inputs) -> None:
             exp_values = np.exp(inputs - np.max(inputs, axis=1, keepdims=True))
             probabilities = exp_values / np.sum(
                 exp_values, axis=1, keepdims=True)
