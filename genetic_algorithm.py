@@ -4,7 +4,7 @@ import time
 import matplotlib.pyplot as plt
 
 GENERATION_SIZE = 30  #must be even number
-NUMBER_OF_GENERATIONS = 5
+NUMBER_OF_GENERATIONS = 100000
 
 
 class Genome:
@@ -17,7 +17,7 @@ class Genome:
         self.cost = self.cost_function()
 
     def mutate(self):
-        if random.randint(1, 100) < 2:
+        if random.randint(1, 100) < 10:
             random_int = random.randint(1, 3)
             if random_int == 1: self.x = random.randint(-100, 100)
             if random_int == 2: self.y = random.randint(-100, 100)
@@ -118,9 +118,9 @@ def main():
             costs.append(genome.cost)
             pos.append(i)
 
-            plt.ylim(0, 500000)
-            plt.scatter(pos, costs, color="black")
-            plt.pause(0.001)
+            #plt.ylim(0, 500000)
+            #plt.scatter(pos, costs, color="black")
+            #plt.pause(0.001)
 
         print(
             f"Generation {generation} done, average cost: {generation_avarage_cost(genomes)}"

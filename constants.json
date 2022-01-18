@@ -1,8 +1,8 @@
 {
     "PARAMETERS":{
-        "FIELD_WIDTH": 20,
-        "FIELD_HEIGHT": 20,
-        "TILE_SIZE": 20,
+        "FIELD_WIDTH": 100,
+        "FIELD_HEIGHT": 100,
+        "TILE_SIZE": 5,
         "BACKGROUND_COLOR": {
             "R": 222,
             "G": 222,

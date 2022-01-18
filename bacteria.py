@@ -5,9 +5,9 @@ from brain import Brain
 
 
 class Bacteria:
-    def __init__(self, id, pos, genome) -> None:
+    def __init__(self, id, pos, score, genome) -> None:
         self.id = id
-        self.score = 0
+        self.score = score
         self.genome = genome
         self.pos = pos
         self.age = 0
@@ -15,8 +15,9 @@ class Bacteria:
         self.max_age = self.genome.max_age
         self.food_for_reproduction = self.genome.food_for_reproduction
         self.color = self.genome.color
-        self.brain = Brain(10, self.genome.weights_l1, self.genome.weights_l2,
-                           self.genome.weights_l3)
+        self.brain = Brain(20, self.genome.weights_l1, self.genome.weights_l2,
+                           self.genome.weights_l3, self.genome.bias1,
+                           self.genome.bias2, self.genome.bias3)
 
     def __str__(self) -> str:
         return f"Bacteria id: {self.id}"
@@ -31,79 +32,82 @@ class Bacteria:
             uptile = tilemap.get_tile(self.pos.x, self.pos.y - 1)
             if uptile.is_open():
                 enviroment["up_tile_empty"] = 1
-                enviroment["up_tile_food"] = 0
-                enviroment["up_tile_bac"] = 0
+                enviroment["up_tile_food"] = -1
+                enviroment["up_tile_bac"] = -1
             elif uptile.food != None:
-                enviroment["up_tile_empty"] = 0
+                enviroment["up_tile_empty"] = -1
                 enviroment["up_tile_food"] = 1
-                enviroment["up_tile_bac"] = 0
+                enviroment["up_tile_bac"] = -1
             elif uptile.bacteria != None:
-                enviroment["up_tile_empty"] = 0
-                enviroment["up_tile_food"] = 0
+                enviroment["up_tile_empty"] = -1
+                enviroment["up_tile_food"] = -1
                 enviroment["up_tile_bac"] = 1
         else:
-            enviroment["up_tile_empty"] = 0
-            enviroment["up_tile_food"] = 0
-            enviroment["up_tile_bac"] = 0
+            enviroment["up_tile_empty"] = -1
+            enviroment["up_tile_food"] = -1
+            enviroment["up_tile_bac"] = -1
 
         if self.pos.y < FIELD_HEIGHT - 1:
             downtile = tilemap.get_tile(self.pos.x, self.pos.y + 1)
             if downtile.is_open():
                 enviroment["down_tile_empty"] = 1
-                enviroment["down_tile_food"] = 0
-                enviroment["down_tile_bac"] = 0
+                enviroment["down_tile_food"] = -1
+                enviroment["down_tile_bac"] = -1
             elif downtile.food != None:
-                enviroment["down_tile_empty"] = 0
+                enviroment["down_tile_empty"] = -1
                 enviroment["down_tile_food"] = 1
-                enviroment["down_tile_bac"] = 0
+                enviroment["down_tile_bac"] = -1
             elif downtile.bacteria != None:
-                enviroment["down_tile_empty"] = 0
-                enviroment["down_tile_food"] = 0
+                enviroment["down_tile_empty"] = -1
+                enviroment["down_tile_food"] = -1
                 enviroment["down_tile_bac"] = 1
         else:
-            enviroment["down_tile_empty"] = 0
-            enviroment["down_tile_food"] = 0
-            enviroment["down_tile_bac"] = 0
+            enviroment["down_tile_empty"] = -1
+            enviroment["down_tile_food"] = -1
+            enviroment["down_tile_bac"] = -1
 
         if self.pos.x > 0:
             lefttile = tilemap.get_tile(self.pos.x - 1, self.pos.y)
             if lefttile.is_open():
                 enviroment["left_tile_empty"] = 1
-                enviroment["left_tile_food"] = 0
-                enviroment["left_tile_bac"] = 0
+                enviroment["left_tile_food"] = -1
+                enviroment["left_tile_bac"] = -1
             elif lefttile.food != None:
-                enviroment["left_tile_empty"] = 0
+                enviroment["left_tile_empty"] = -1
                 enviroment["left_tile_food"] = 1
-                enviroment["left_tile_bac"] = 0
+                enviroment["left_tile_bac"] = -1
             elif lefttile.bacteria != None:
-                enviroment["left_tile_empty"] = 0
-                enviroment["left_tile_food"] = 0
+                enviroment["left_tile_empty"] = -1
+                enviroment["left_tile_food"] = -1
                 enviroment["left_tile_bac"] = 1
         else:
-            enviroment["left_tile_empty"] = 0
-            enviroment["left_tile_food"] = 0
-            enviroment["left_tile_bac"] = 0
+            enviroment["left_tile_empty"] = -1
+            enviroment["left_tile_food"] = -1
+            enviroment["left_tile_bac"] = -1
 
         if self.pos.x < FIELD_WIDTH - 1:
             righttile = tilemap.get_tile(self.pos.x + 1, self.pos.y)
             if righttile.is_open():
                 enviroment["right_tile_empty"] = 1
-                enviroment["right_tile_food"] = 0
-                enviroment["right_tile_bac"] = 0
+                enviroment["right_tile_food"] = -1
+                enviroment["right_tile_bac"] = -1
             elif righttile.food != None:
-                enviroment["right_tile_empty"] = 0
+                enviroment["right_tile_empty"] = -1
                 enviroment["right_tile_food"] = 1
-                enviroment["right_tile_bac"] = 0
+                enviroment["right_tile_bac"] = -1
             elif righttile.bacteria != None:
-                enviroment["right_tile_empty"] = 0
-                enviroment["right_tile_food"] = 0
+                enviroment["right_tile_empty"] = -1
+                enviroment["right_tile_food"] = -1
                 enviroment["right_tile_bac"] = 1
         else:
-            enviroment["right_tile_empty"] = 0
-            enviroment["right_tile_food"] = 0
-            enviroment["right_tile_bac"] = 0
+            enviroment["right_tile_empty"] = -1
+            enviroment["right_tile_food"] = -1
+            enviroment["right_tile_bac"] = -1
 
         enviroment["food_eaten"] = self.food_eaten
+        enviroment["age"] = 1 / self.age
+        enviroment["x"] = 1 / (self.pos.x + 1)
+        enviroment["y"] = 1 / (self.pos.y + 1)
 
         return enviroment
 
@@ -165,10 +169,11 @@ class Bacteria:
             tilemap, FIELD_WIDTH, FIELD_HEIGHT)
         if target_tile == None: return None
         new_bac = Bacteria(
-            self.id, target_tile.pos,
+            self.id, target_tile.pos, self.score,
             Genome(self.color, self.max_age, self.food_for_reproduction,
                    self.genome.weights_l1, self.genome.weights_l2,
-                   self.genome.weights_l3))
+                   self.genome.weights_l3, self.genome.bias1,
+                   self.genome.bias2, self.genome.bias3))
 
         target_tile.bacteria = new_bac
 
@@ -187,12 +192,42 @@ class Bacteria:
                 bacteria.remove(bac)
                 bacteria_tile.bacteria = None
 
-    def eat(self, foods) -> None:
+    def eat(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
+        possible_directions = self.get_possible_directions(
+            FIELD_WIDTH, FIELD_HEIGHT)
 
-        for food in foods:
-            if self.pos.is_adjacent_to(food.pos) == True:
+        if "up" in possible_directions:
+            up_tile = tilemap.get_tile(self.pos.x, self.pos.y - 1)
+            if up_tile.food != None:
+                up_food = up_tile.food
+                up_food.stock -= 1
                 self.food_eaten += 1
-                food.stock -= 1
+                if self.food_eaten < self.food_for_reproduction:
+                    self.score += 5
+        if "down" in possible_directions:
+            down_tile = tilemap.get_tile(self.pos.x, self.pos.y + 1)
+            if down_tile.food != None:
+                down_food = down_tile.food
+                down_food.stock -= 1
+                self.food_eaten += 1
+                if self.food_eaten < self.food_for_reproduction:
+                    self.score += 5
+
+        if "right" in possible_directions:
+            right_tile = tilemap.get_tile(self.pos.x + 1, self.pos.y)
+            if right_tile.food != None:
+                right_food = right_tile.food
+                right_food.stock -= 1
+                self.food_eaten += 1
+                if self.food_eaten < self.food_for_reproduction:
+                    self.score += 5
+
+        if "left" in possible_directions:
+            left_tile = tilemap.get_tile(self.pos.x - 1, self.pos.y)
+            if left_tile.food != None:
+                left_food = left_tile.food
+                left_food.stock -= 1
+                self.food_eaten += 1
                 if self.food_eaten < self.food_for_reproduction:
                     self.score += 5
 

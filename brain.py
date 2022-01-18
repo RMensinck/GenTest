@@ -8,19 +8,22 @@ zorgen dat self.n_inputs dynamisch wordt
 
 
 class Brain:
-    def __init__(self, neurons_per_layer, weights_l1, weights_l2,
-                 weights_l3) -> None:
+    def __init__(self, neurons_per_layer, weights_l1, weights_l2, weights_l3,
+                 bias1, bias2, bias3) -> None:
 
-        self.n_inputs = 13
+        self.n_inputs = 16
         self.n_neurons = neurons_per_layer
         self.actions = [
             "move up", "move down", "move left", "move right", "eat", "devide"
         ]
-        self.dense1 = self.Layer_Dense(weights_l1, self.n_neurons)
+        #self.bias1 = np.random.randn(1, neurons_per_layer)
+        #self.bias2 = np.random.randn(1, neurons_per_layer)
+        #self.bias3 = np.random.randn(1, len(self.actions))
+        self.dense1 = self.Layer_Dense(weights_l1, bias1)
         self.activation1 = self.Activation_ReLU()
-        self.dense2 = self.Layer_Dense(weights_l2, self.n_neurons)
+        self.dense2 = self.Layer_Dense(weights_l2, bias2)
         self.activation2 = self.Activation_ReLU()
-        self.dense3 = self.Layer_Dense(weights_l3, len(self.actions))
+        self.dense3 = self.Layer_Dense(weights_l3, bias3)
         self.activation3 = self.Activation_Softmax()
 
     def get_output(self, enviorment_list) -> str:
@@ -48,14 +51,15 @@ class Brain:
             enviorment_list['left_tile_bac'],
             enviorment_list['right_tile_empty'],
             enviorment_list['right_tile_food'],
-            enviorment_list['right_tile_bac'], enviorment_list['food_eaten']
+            enviorment_list['right_tile_bac'], enviorment_list['food_eaten'],
+            enviorment_list['age'], enviorment_list['x'], enviorment_list['y']
         ])
         return input_list
 
     class Layer_Dense:
-        def __init__(self, weights, n_neurons) -> None:
+        def __init__(self, weights, bias_set) -> None:
             self.weights = weights
-            self.biases = np.zeros((1, n_neurons))
+            self.biases = bias_set
 
         def forward(self, inputs) -> None:
             self.output = np.dot(inputs, self.weights) + self.biases
