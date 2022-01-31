@@ -8,17 +8,13 @@ zorgen dat self.n_inputs dynamisch wordt
 
 
 class Brain:
-    def __init__(self, neurons_per_layer, weights_l1, weights_l2, weights_l3,
-                 bias1, bias2, bias3) -> None:
+    def __init__(self, weights_l1, weights_l2, weights_l3, bias1, bias2,
+                 bias3) -> None:
 
         self.n_inputs = 16
-        self.n_neurons = neurons_per_layer
         self.actions = [
             "move up", "move down", "move left", "move right", "eat", "devide"
         ]
-        #self.bias1 = np.random.randn(1, neurons_per_layer)
-        #self.bias2 = np.random.randn(1, neurons_per_layer)
-        #self.bias3 = np.random.randn(1, len(self.actions))
         self.dense1 = self.Layer_Dense(weights_l1, bias1)
         self.activation1 = self.Activation_ReLU()
         self.dense2 = self.Layer_Dense(weights_l2, bias2)

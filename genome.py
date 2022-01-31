@@ -3,11 +3,8 @@ import numpy as np
 
 
 class Genome:
-    def __init__(self, color, max_age, food_for_reproduction, l1, l2, l3, b1,
-                 b2, b3) -> None:
-        self.color = color
-        self.max_age = max_age
-        self.food_for_reproduction = food_for_reproduction
+    def __init__(self, l1, l2, l3, b1, b2, b3) -> None:
+
         self.weights_l1 = l1
         self.weights_l2 = l2
         self.weights_l3 = l3

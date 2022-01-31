@@ -1,8 +1,7 @@
+from typing import DefaultDict
 import numpy as np
 import random
 
-array = np.random.randn(1, 10)
+list = [3, 2, 6, 4, 11]
 
-print(array)
-
-print(array[0])
+print(sorted(list))

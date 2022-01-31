@@ -5,22 +5,28 @@ from brain import Brain
 
 
 class Bacteria:
-    def __init__(self, id, pos, score, genome) -> None:
+    def __init__(self, id, pos, score, max_age, food_for_reproduction, color,
+                 genome) -> None:
         self.id = id
         self.score = score
         self.genome = genome
         self.pos = pos
         self.age = 0
         self.food_eaten = 0
-        self.max_age = self.genome.max_age
-        self.food_for_reproduction = self.genome.food_for_reproduction
-        self.color = self.genome.color
-        self.brain = Brain(20, self.genome.weights_l1, self.genome.weights_l2,
+        self.max_age = max_age
+        self.food_for_reproduction = food_for_reproduction
+        self.color = color
+        self.brain = Brain(self.genome.weights_l1, self.genome.weights_l2,
                            self.genome.weights_l3, self.genome.bias1,
                            self.genome.bias2, self.genome.bias3)
 
     def __str__(self) -> str:
         return f"Bacteria id: {self.id}"
+
+    def update_brain(self):
+        self.brain = Brain(self.genome.weights_l1, self.genome.weights_l2,
+                           self.genome.weights_l3, self.genome.bias1,
+                           self.genome.bias2, self.genome.bias3)
 
     def get_action(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> str:
         return self.brain.get_output(
@@ -111,12 +117,6 @@ class Bacteria:
 
         return enviroment
 
-    def update_self(self) -> None:
-        self.max_age = self.genome.max_age
-        self.food_for_reproduction = self.genome.food_for_reproduction
-        self.color = self.genome.color
-        self.can_kill = self.genome.can_kill
-
     #moves the bacteria randomly
     def move(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
         target_tile = self.get_random_open_adjecent_tile(
@@ -169,28 +169,17 @@ class Bacteria:
             tilemap, FIELD_WIDTH, FIELD_HEIGHT)
         if target_tile == None: return None
         new_bac = Bacteria(
-            self.id, target_tile.pos, self.score,
-            Genome(self.color, self.max_age, self.food_for_reproduction,
-                   self.genome.weights_l1, self.genome.weights_l2,
+            self.id, target_tile.pos, 0, self.max_age,
+            self.food_for_reproduction, self.color,
+            Genome(self.genome.weights_l1, self.genome.weights_l2,
                    self.genome.weights_l3, self.genome.bias1,
                    self.genome.bias2, self.genome.bias3))
 
         target_tile.bacteria = new_bac
+        self.food_eaten = 0
+        self.score += 10
 
         return new_bac
-
-    """
-    need to register food and bacteria to the tile so we dont need to loop all the food and bacteria
-    """
-
-    def kill_adjecent_bacteria(self, bacteria, tilemap) -> None:
-
-        for bac in bacteria:
-            if self.pos.is_adjacent_to(bac.pos) == True:
-                self.food_eaten += 1
-                bacteria_tile = tilemap.get_tile_by_pos(bac.pos)
-                bacteria.remove(bac)
-                bacteria_tile.bacteria = None
 
     def eat(self, tilemap, FIELD_WIDTH, FIELD_HEIGHT) -> None:
         possible_directions = self.get_possible_directions(
